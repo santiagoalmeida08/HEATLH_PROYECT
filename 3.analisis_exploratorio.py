@@ -24,7 +24,7 @@ cur.fetchall()
 
 # cargar base de datos 
 
-hr = pd.read_sql('SELECT * FROM hr', conn)
+hr = pd.read_sql('SELECT * FROM tabla1', conn)
 
 hr.dtypes
 
@@ -77,3 +77,36 @@ fig.update_layout(
     title_x = 0.5)
 
 fig.show()
+
+#--Analisis de variables categoricas
+
+hr_cat = hr.iloc[:, 8:] #seleccionamos variables categoricas
+
+for column in  hr_cat.columns:
+    plt.figure(figsize=(12,6))
+    sns.countplot(x=column, data=hr_cat)
+    plt.title(column)
+    
+# agrupar injury y musculoskeletal en variables de diagnostico
+# Missing wn medical_specialty se refiere a que no se especifico la especialidad
+# Agrupar medicina interna y emergencia en especialidades de medicina
+    
+
+# Prueba chi-cuadrado
+from scipy.stats import chi2_contingency
+
+
+def chi_square_test(dataframe, target): 
+    for col in dataframe.columns:
+        print(col)
+        print("----------")
+        cross_tab = pd.crosstab(dataframe[col], dataframe[target], margins = False)
+        stat, p, dof, expected = chi2_contingency(cross_tab)
+        print(f"Chi-Square Statistic: {stat}, p-value: {p}")
+        print("===========")
+        
+chi_square_test(hr_cat, 'readmitted')
+
+
+#Las variables referentes a als pruebas no representativas ; sin embargo es importante tener estos 
+#datos en cuenta al momento de proponer estrategias y concluir

@@ -44,19 +44,8 @@ hr2.dtypes
 
 # Preprocesamiento variables 9--17
 
-s1 = pd.read_sql("""SELECT medical_specialty as especialidad, count(*) AS ingresos FROM hr
-                    GROUP BY especialidad
-                    ORDER BY ingresos DESC""", conn)
-sns.barplot(x='ingresos', y='especialidad', data=s1, color='blue')
+fn.ejecutar_sql('1.preprocesamiento.sql',conn)
 
-s2 = pd.read_sql("""SELECT diag_1 as diagnostico, count(*) AS pacientes FROM hr
-                    GROUP BY diagnostico
-                    ORDER BY pacientes DESC""", conn)
-sns.barplot(x='pacientes', y='diagnostico', data=s2, color='blue')
-
-
-s3 = pd.read_sql("""SELECT diag_2 as diagnostico, count(*) AS conteo FROM hr
-                    GROUP BY diagnostico
-                    ORDER BY conteo DESC""", conn)
-
+bf = pd.read_sql('SELECT * FROM hrmin', conn)
+bf['medical_specialty'].value_counts()
 
