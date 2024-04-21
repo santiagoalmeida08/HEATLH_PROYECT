@@ -1,6 +1,5 @@
 --1. La variable age convertirla a categoria con ordinal encoding
 
-
 DROP TABLE IF EXISTS tabla1;
 CREATE TABLE tabla1 AS SELECT * FROM hr;
 
