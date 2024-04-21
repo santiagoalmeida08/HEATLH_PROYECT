@@ -62,14 +62,3 @@ s3 = pd.read_sql("""SELECT diag_2 as diagnostico, count(*) AS conteo FROM hr
                     ORDER BY conteo DESC""", conn)
 
 
-
-
-# Crear una instancia del OrdinalEncoder
-# Aquí puedes especificar el orden de las categorías explícitamente
-encoder = OrdinalEncoder(categories=[['Básico', 'Avanzado', 'Profesional']])
-
-# Ajustar el encoder a los datos y transformarlos
-df['Categoria_Ordinal'] = encoder.fit_transform(df[['Categoria']])
-
-# Mostrar el resultado
-print(df)
