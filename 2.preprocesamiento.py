@@ -6,6 +6,7 @@ import sqlite3 as sql
 import funciones as fn 
 import matplotlib.pyplot as plt
 import seaborn as sns  
+from sklearn.preprocessing import OrdinalEncoder
 
 # conexión a la base de datos
 
@@ -29,6 +30,20 @@ hr.isnull().sum()
 hr[['glucose_test']].value_counts()
 hr[['A1Ctest']].value_counts()
 
+###   Preprocesamiento   ###
+
+hr[['age']].value_counts()# volver categoria la variable edad
+encoder= OrdinalEncoder(categories=[['[40-50)', '[50-60)', '[60-70)', '[70-80)', '[80-90)', '[90-100)']])
+hr2=hr.copy()
+hr2['edad']=encoder.fit_transform(hr2[['age']])#se uso ordinal encoder porque tienen la misma distancia
+
+hr2.dtypes 
+#Se debe borrar la columna age y cambiar de float a categorica la columna edad 
+
+
+
+
+
 # Preprocesamiento variables 9--17
 
 s1 = pd.read_sql("""SELECT medical_specialty as especialidad, count(*) AS ingresos FROM hr
@@ -46,3 +61,15 @@ s3 = pd.read_sql("""SELECT diag_2 as diagnostico, count(*) AS conteo FROM hr
                     GROUP BY diagnostico
                     ORDER BY conteo DESC""", conn)
 
+
+
+
+# Crear una instancia del OrdinalEncoder
+# Aquí puedes especificar el orden de las categorías explícitamente
+encoder = OrdinalEncoder(categories=[['Básico', 'Avanzado', 'Profesional']])
+
+# Ajustar el encoder a los datos y transformarlos
+df['Categoria_Ordinal'] = encoder.fit_transform(df[['Categoria']])
+
+# Mostrar el resultado
+print(df)
