@@ -42,8 +42,6 @@ hr2.dtypes
 
 
 
-
-
 # Preprocesamiento variables 9--17
 
 s1 = pd.read_sql("""SELECT medical_specialty as especialidad, count(*) AS ingresos FROM hr
