@@ -13,11 +13,14 @@ from sklearn.preprocessing import OrdinalEncoder
 r = pd.read_csv('data//hospital_readmissions.csv')
 r
 
+
 conn = sql.connect('data//readmissions.db')
 cur = conn.cursor()
 
 # insertar el DataFrame en la base de datos
 r.to_sql('hr', conn, if_exists='replace', index=False)
+
+
 
 cur.execute('SELECT name FROM sqlite_master WHERE type="table"')
 cur.fetchall()
@@ -39,6 +42,9 @@ re2['edad']=encoder.fit_transform(re2[['age']])#se uso ordinal encoder porque ti
 
 re2.dtypes 
 re2.to_csv('data/re2.csv', index= False)
+base = pd.read_csv('data//re2.csv')
+base.to_sql('basecambios', conn, if_exists='replace', index=False)
+
 
 #Se debe borrar la columna age y cambiar de float a categorica la columna edad 
 
