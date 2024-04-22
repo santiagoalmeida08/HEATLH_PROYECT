@@ -48,3 +48,14 @@ SET diag_1 =
         WHEN 'injury' THEN 'musculoskeletal'
         ELSE diag_3
     END;
+
+UPDATE hrim 
+SET age=
+    CASE
+    WHEN '[50-60)' THEN 1
+    WHEN '[60-70)' THEN 2
+    WHEN '[70-80)' THEN 3
+    WHEN '[80-90)' THEN 4
+    WHEN '[90-100)' THEN 5
+    ELSE age 
+END;
