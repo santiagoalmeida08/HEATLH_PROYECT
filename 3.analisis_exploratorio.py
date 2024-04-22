@@ -165,11 +165,17 @@ c['diag_1'].value_counts()
 
 #Analisis de variable obejtiivo
 sns.countplot(x= 'readmitted', data = hr_cat)
-
+plt.title('Readmitted')
+plt.show()
 
 # Prueba chi-cuadrado
 
 fn.chi_square_test(hr_cat, 'readmitted')
+
+"""Podemos observar que las variables que no tienen una relacion significativa con la variable objetivo son:
+    glucose_test y A1C_test ya que el p-valor es mayor a 0.05, por lo cual se eliminara de la base de datos; respecto a las demas
+    variables observamos que existe un tipo de relacion, sin embargo no podemos determinar la magnitud de dicha relacion; por lo cual nos apoyaremos
+    del uso de un algoritmo para seleccionar las variables las importantes"""
 
 
 #Las variables referentes a als pruebas no representativas ; sin embargo es importante tener estos 
