@@ -1,7 +1,11 @@
 
 DROP TABLE IF EXISTS hrmin;
 CREATE TABLE hrmin AS 
-SELECT * FROM hr;
+SELECT time_in_hospital, n_lab_procedures, n_procedures,	n_medications, 
+n_outpatient, n_inpatient, n_emergency,	medical_specialty,	diag_1,
+diag_2,	diag_3,	glucose_test,	A1Ctest, change, diabetes_med,	readmitted, edad FROM basecambios;
+
+
 
 UPDATE hrmin
 SET medical_specialty = LOWER(medical_specialty),
@@ -35,7 +39,6 @@ SET diag_1 =
 
 
 DROP TABLE IF EXISTS tabla1;
-CREATE TABLE tabla1 AS 
-SELECT * FROM re2;
+DROP TABLE IF EXISTS categorias_unicas;
 
-ALTER TABLE tabla1 drop column age;
+
