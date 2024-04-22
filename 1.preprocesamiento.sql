@@ -3,34 +3,15 @@
 DROP TABLE IF EXISTS tabla1;
 CREATE TABLE tabla1 AS SELECT * FROM hr;
 
--- Crear una tabla temporal para almacenar las categorías únicas junto con su codificación ordinal
-DROP TABLE IF EXISTS categorias_unicas;
-CREATE TABLE categorias_unicas AS
-SELECT DISTINCT age
-FROM tabla1;
-
--- Agregar una columna de codificación ordinal a la tabla temporal
-ALTER TABLE categorias_unicas
-ADD COLUMN cod_ordinal INTEGER;
-
--- Asignar números secuenciales a cada categoría
-UPDATE categorias_unicas
-SET cod_ordinal = (SELECT ROW_NUMBER()  OVER (ORDER BY age)
-                    FROM categorias_unicas AS cu2
-                    WHERE cu2.age = categorias_unicas.age);
-
-ALTER TABLE tabla1 ADD COLUMN edad INTEGER;
-
-
--- Actualizar la tabla original con la codificación ordinal
 UPDATE tabla1
-SET categoria_encoded = (
-    SELECT cod_ordinal 
-    FROM categorias_unicas 
-    WHERE categorias_unicas.age = tabla1.age);
-
--- Eliminar la tabla temporal
---DROP TABLE categorias_unicas;
+CASE age
+    WHEN '[50-60)' THEN 1
+    WHEN '[60-70)' THEN 2
+    WHEN '[70-80)' THEN 3
+    WHEN '[80-90)' THEN 4
+    WHEN '[90-100)' THEN 5
+    ELSE NULL 
+END;
 
 
 DROP TABLE IF EXISTS hrmin;
