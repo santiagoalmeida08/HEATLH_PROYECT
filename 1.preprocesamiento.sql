@@ -5,14 +5,14 @@ CREATE TABLE tabla1 AS SELECT * FROM hr;
 
 UPDATE tabla1
 SET age=
-    CASE age
-        WHEN '[50-60)' THEN 1
-        WHEN '[60-70)' THEN 2
-        WHEN '[70-80)' THEN 3
-        WHEN '[80-90)' THEN 4
-        WHEN '[90-100)' THEN 5
-        ELSE NULL 
-    END;
+CASE age
+    WHEN '[50-60)' THEN 1
+    WHEN '[60-70)' THEN 2
+    WHEN '[70-80)' THEN 3
+    WHEN '[80-90)' THEN 4
+    WHEN '[90-100)' THEN 5
+    ELSE NULL 
+END;
 
 
 DROP TABLE IF EXISTS hrmin;
