@@ -1,4 +1,5 @@
  
+#Paquetes requeridos  
 import pandas as pd
 import sqlite3 as sql
 import funciones as fn 
@@ -7,6 +8,8 @@ import seaborn as sns
 from sklearn.preprocessing import OrdinalEncoder
 #visualización
 import plotly.express as px
+#Prueba chi-cuadrado
+from scipy.stats import chi2_contingency
 
 # conexión a la base de datos
 
@@ -44,7 +47,7 @@ for col in cat_cols:
 
 
 def num_summary(dataframe, numerical_col, plot=False):
-    quantiles = [0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.99]
+    quantiles = [ 0.20, 0.50, 0.80, 0.959]
     print(dataframe[numerical_col].describe(quantiles).T)
 
     if plot:
@@ -61,7 +64,7 @@ for col in num_cols:
     num_summary(hr, col, plot=False)
 
 
-#Variables numericas 
+# Analisis Variables numericas 
 hr.columns
 hr_num = hr.iloc[:, 0:7] #seleccionamos variables numericas 
 
@@ -84,72 +87,89 @@ for column in hr_num.columns:
     fig.show()
 
 
-"""Frecuencia de tiempo en hospital 
-Se observa que hay una menor cantidad de pacientes a medida que aumenta el tiempo 
-en el hospital, ademas se observa que hay gran numero de datos en cada valor por lo 
-cual la variable sigue siendo signficativa
-Frecuencia de numero de procedimientos de laboratorio
-Se puede observar que los datos tienen una distribución normal a pesar de que la mayor cantidad 
-de pacientes solos se les realiza un procedimiento de laboratorio 
-Frecuencia del numero de procedimientos
-La varible es representativa ya que hay una cantidad de datos representativa para 
-los diferentes numeros de procedimiento, tambien se puede ver que mayor numero de procedimientos
-disminuye el numero de pacientes
-Frecuencia de numero de medicamentos 
-Los valores se distribuyen de forma normal con un leve sesgo a la derecha, con poca frecuencia ya que 
-son pocos los pacientes que necesitan un gran numero de medicamentos
-Frecuencia de numero de visitas ambulatorias 
-Se observa que la gran mayoria de los datos estan en el valor de cero por lo cual esta variable 
-puede considerarse no representativa
-Frecuencia de n_inpatient 
-En cuanto a el numero de visitas el año anterior la mayoria de datos tienen un valor de cero, pero 
-aun asi esto no es suficiente para descartar esta variable 
-Frecuencia de n_emergency
-La variable de pacientes que estuvieron en emergencia el año anterior no es representativa segun el grafico
-a pesar de esto se tendra en cuenta para aplicar un modelo de seleccion de variables
+"""
+- Frecuencia de tiempo en hospital 
+    Se observa que hay una menor cantidad de pacientes a medida que aumenta el tiempo 
+    en el hospital, ademas se observa que hay gran numero de datos en cada valor por lo 
+    cual la variable sigue siendo signficativa
+    
+- Frecuencia de numero de procedimientos de laboratorio
+    Se puede observar que los datos tienen una distribución normal a pesar de que la mayor cantidad 
+    de pacientes solos se les realiza un procedimiento de laboratorio 
+    
+- Frecuencia del numero de procedimientos
+    La varible es representativa ya que hay una cantidad de datos representativa para 
+    los diferentes numeros de procedimiento, tambien se puede ver que mayor numero de procedimientos
+    disminuye el numero de pacientes
+    
+- Frecuencia de numero de medicamentos 
+    Los valores se distribuyen de forma normal con un leve sesgo a la derecha, con poca frecuencia ya que 
+    son pocos los pacientes que necesitan un gran numero de medicamentos
+    
+- Frecuencia de numero de visitas ambulatorias 
+    Se observa que la gran mayoria de los datos estan en el valor de cero por lo cual esta variable 
+    puede considerarse no representativa
+    
+- Frecuencia de n_inpatient 
+    En cuanto a el numero de visitas el año anterior la mayoria de datos tienen un valor de cero, pero 
+    aun asi esto no es suficiente para descartar esta variable 
+    
+- Frecuencia de n_emergency
+    La variable de pacientes que estuvieron en emergencia el año anterior no es representativa segun el grafico
+    a pesar de esto se tendra en cuenta para aplicar un modelo de seleccion de variables
+    
 """
 
-
-#analisis de correlacion entre variables numericas 
 # Analisis de correlacion entre variables numericas #
 correlation = hr_num.corr()
 plt.figure(figsize=(15, 15))
 sns.heatmap(correlation, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5)
 plt.title('Correlation Heatmap')
 plt.show()
+
 """No hay una correlación fuerte entre las variables numericas, el valor mas alto lo las variables numero de medicamentos y el tiempo en el hospital, 
 mientras mas tiempo esta un paciente en el hospital mayor es el numero de medicamentos a pesar de la clara relación
 la correlación no supera un valor de 0,5 por lo cual ambas variables se seguiran teniendo en cuenta"""
 
 
-#--Analisis de variables categoricas
+# Analisis de variables categoricas #
 
 hr_cat = hr.iloc[:, 8:] #seleccionamos variables categoricas
 
 for column in  hr_cat.columns:
-    plt.figure(figsize=(12,6))
-    sns.countplot(x=column, data=hr_cat)
-    plt.title(column)
-    
-# agrupar injury y musculoskeletal en variables de diagnostico
-# Missing wn medical_specialty se refiere a que no se especifico la especialidad
-# Agrupar medicina interna y emergencia en especialidades de medicina
-    
+    if column != 'readmitted':
+        plt.figure(figsize=(12,6))
+        sns.countplot(x=column, data=hr_cat)
+        plt.title(column)
+        
+c = hr_cat.loc[:, ['diag_1','diag_2','diag_3']]
+c[(c['diag_1'] == 'circulatory') & (c['diag_2'] == 'circulatory')]
+
+#Se observa que la cantidad de test no realizados es proporcional a la cantidad de pacientes diabeticos 
+hr_cat['glucose_test'].value_counts()   
+c['diag_1'].value_counts()
+
+"""
+-Diagnosticos : se observa que los diagnosticos que reciben los pacientes varian mucho en los reingresos que se tienen
+    ademas de ello se observa la presencia de la categoria 'missing' en los diagnosticos con pocos registros, por lo cual se eliminara
+
+-Tests : es una categoria que no es representativa ya que la mayoria de los pacientes no se les realiza la prueba
+
+- change : indica si se cambio la medicación para la diabetes, se observa un leve equilibrio entre ambas categorias por lo cual se considera representativa
+
+- diabetes_med :  observamos que a la mayoria de los pacientes se les prescribio una orden para diabetes
+
+-edad :  Los pacientes tienen desde 40 años hasta los 100; la mayoria de los pacientes se encuentran en el rango de 70-80 años.
+
+"""    
+
+#Analisis de variable obejtiivo
+sns.countplot(x= 'readmitted', data = hr_cat)
+
 
 # Prueba chi-cuadrado
-from scipy.stats import chi2_contingency
 
-
-def chi_square_test(dataframe, target): 
-    for col in dataframe.columns:
-        print(col)
-        print("----------")
-        cross_tab = pd.crosstab(dataframe[col], dataframe[target], margins = False)
-        stat, p, dof, expected = chi2_contingency(cross_tab)
-        print(f"Chi-Square Statistic: {stat}, p-value: {p}")
-        print("===========")
-        
-chi_square_test(hr_cat, 'readmitted')
+fn.chi_square_test(hr_cat, 'readmitted')
 
 
 #Las variables referentes a als pruebas no representativas ; sin embargo es importante tener estos 
