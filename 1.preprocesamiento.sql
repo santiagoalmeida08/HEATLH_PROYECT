@@ -38,7 +38,3 @@ SET diag_1 =
     END;
 
 
-DROP TABLE IF EXISTS tabla1;
-DROP TABLE IF EXISTS categorias_unicas;
-
-

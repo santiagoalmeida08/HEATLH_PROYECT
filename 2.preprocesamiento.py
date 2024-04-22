@@ -46,11 +46,7 @@ base = pd.read_csv('data//re2.csv')
 base.to_sql('basecambios', conn, if_exists='replace', index=False)
 
 
-#Se debe borrar la columna age y cambiar de float a categorica la columna edad 
-
-
-
-# Preprocesamiento variables 9--17
+# Preprocesamiento 
 
 fn.ejecutar_sql('1.preprocesamiento.sql',conn)
 
