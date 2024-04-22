@@ -5,7 +5,7 @@ CREATE TABLE tabla1 AS SELECT * FROM hr;
 
 UPDATE tabla1
 SET age=
-CASE age
+CASE 
     WHEN '[50-60)' THEN 1
     WHEN '[60-70)' THEN 2
     WHEN '[70-80)' THEN 3
