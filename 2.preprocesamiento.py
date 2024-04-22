@@ -49,3 +49,6 @@ fn.ejecutar_sql('1.preprocesamiento.sql',conn)
 bf = pd.read_sql('SELECT * FROM hrmin', conn)
 bf['medical_specialty'].value_counts()
 
+
+
+tabla1 = pd.read_sql('SELECT * FROM tabla1', conn)

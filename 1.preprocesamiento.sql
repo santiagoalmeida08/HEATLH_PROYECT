@@ -15,15 +15,19 @@ ADD COLUMN cod_ordinal INTEGER;
 
 -- Asignar números secuenciales a cada categoría
 UPDATE categorias_unicas
-SET cod_ordinal = (SELECT COUNT(*) FROM categorias_unicas cu2 WHERE cu2.age <= categorias_unicas.age);
+SET cod_ordinal = (SELECT ROW_NUMBER()  OVER (ORDER BY age)
+                    FROM categorias_unicas AS cu2
+                    WHERE cu2.age = categorias_unicas.age);
+
+ALTER TABLE tabla1 ADD COLUMN edad INTEGER;
+
 
 -- Actualizar la tabla original con la codificación ordinal
---UPDATE tabla1
---SET categoria_encoded = (
---    SELECT cod_ordinal 
- --   FROM categorias_unicas 
---    WHERE categorias_unicas.age = tabla1.age
---);
+UPDATE tabla1
+SET categoria_encoded = (
+    SELECT cod_ordinal 
+    FROM categorias_unicas 
+    WHERE categorias_unicas.age = tabla1.age);
 
 -- Eliminar la tabla temporal
 --DROP TABLE categorias_unicas;
