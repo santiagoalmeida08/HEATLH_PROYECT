@@ -11,7 +11,7 @@ CASE
     WHEN '[70-80)' THEN 3
     WHEN '[80-90)' THEN 4
     WHEN '[90-100)' THEN 5
-    ELSE NULL 
+    ELSE age 
 END;
 
 
