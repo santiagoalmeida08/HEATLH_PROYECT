@@ -1,19 +1,3 @@
---1. La variable age convertirla a categoria con ordinal encoding
-
-DROP TABLE IF EXISTS tabla1;
-CREATE TABLE tabla1 AS SELECT * FROM hr;
-
-UPDATE tabla1
-SET age=
-CASE 
-    WHEN '[50-60)' THEN 1
-    WHEN '[60-70)' THEN 2
-    WHEN '[70-80)' THEN 3
-    WHEN '[80-90)' THEN 4
-    WHEN '[90-100)' THEN 5
-    ELSE age 
-END;
-
 
 DROP TABLE IF EXISTS hrmin;
 CREATE TABLE hrmin AS 
@@ -49,13 +33,9 @@ SET diag_1 =
         ELSE diag_3
     END;
 
-UPDATE hrmin 
-SET age=
-    CASE
-    WHEN '[50-60)' THEN 1
-    WHEN '[60-70)' THEN 2
-    WHEN '[70-80)' THEN 3
-    WHEN '[80-90)' THEN 4
-    WHEN '[90-100)' THEN 5
-    ELSE age 
-END;
+
+DROP TABLE IF EXISTS tabla1;
+CREATE TABLE tabla1 AS 
+SELECT * FROM re2;
+
+ALTER TABLE tabla1 drop column age;
