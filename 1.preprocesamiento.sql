@@ -49,7 +49,7 @@ SET diag_1 =
         ELSE diag_3
     END;
 
-UPDATE hrim 
+UPDATE hrmin 
 SET age=
     CASE
     WHEN '[50-60)' THEN 1

@@ -51,4 +51,6 @@ bf['medical_specialty'].value_counts()
 
 
 
-tabla1 = pd.read_sql('SELECT * FROM tabla1', conn)
+tabla1 = pd.read_sql('SELECT * FROM hrmin', conn)
+tabla1 = pd.read_sql('SELECT * FROM hrim', conn)
+
