@@ -3,17 +3,17 @@
 import pandas as pd
 import numpy as np
 import sqlite3 as sql
+import seaborn as sns
 from sklearn.feature_selection import RFE 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import  DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
 import funciones as fn
-import matplotlib.pyplot as plt
+from sklearn.feature_selection import SelectFromModel
 
 
 # conexión a la base de datos
@@ -25,7 +25,7 @@ cur = conn.cursor()
 
 df = pd.read_sql('SELECT *  from hrmin', conn)
 df.info()
-
+df['edad'] = df['edad'].astype('object')
 # Variables explicativas
 
 x = df.drop(['readmitted'], axis=1)
@@ -34,12 +34,11 @@ y_mod = y.replace({'yes':1, 'no':0})
 
 # Encoding variables #
 
-#Dummies -medical speciality--AC1 TEST
 df1=x.copy()
 
 df1.dtypes
-df1['edad'] = df1['edad'].astype('object')
 
+#Dummies
 list_dummies =['medical_specialty','diag_1','diag_2','diag_3','glucose_test','A1Ctest']
 
 #Ordinal - edad
@@ -52,11 +51,26 @@ list_label = [df1.columns[i] for i in range(len(df1.columns)) if df1[df1.columns
 x_encoded = fn.encode_data(df1, list_label, list_dummies,list_ordinal)
 
 #Escalado de variables 
+
 scaler = StandardScaler()
 Xesc = scaler.fit_transform(x_encoded) 
 Xesc1 = pd.DataFrame(Xesc, columns = x_encoded.columns)
 
-#Definir modelos a evaluar ____ usar bagging
+#Seleccion e importancia de variables 
+
+modelo_importance = LogisticRegression().fit(Xesc1,y_mod)
+selector  = SelectFromModel(estimator=modelo_importance, prefit=True)
+selector.fit(Xesc1,y_mod)
+select_features = Xesc1.columns[selector.get_support()]
+coef = modelo_importance.coef_[0] 
+importance = pd.DataFrame(coef, index = Xesc1.columns, columns = ['coef']).sort_values(by='coef', ascending=False).head(5).reset_index()
+sns.barplot(x='coef', y='index', data=importance,palette='viridis')
+
+
+var_select = fn.sel_variables(LogisticRegression(),Xesc1,y_mod,threshold="2*mean")
+
+
+# Desempeño de los modelos 
 
 mod_tree = DecisionTreeClassifier()
 mod_rand = RandomForestClassifier()
@@ -64,23 +78,6 @@ mod_rand = RandomForestClassifier()
 mod_log = LogisticRegression()
 modelos = list([mod_tree,mod_rand,mod_log])
 
-import seaborn as sns
-
-
-forest = RandomForestClassifier(n_estimators=100, random_state=0)
-forest.fit(Xesc, y_mod)
-
-# Obtenemos la importancia de las características
-importances = forest.feature_importances_
-indices = np.argsort(importances)[::-1]
-#TERMINAR GRAFICO, SINO USAR FUNCION PROFESROR
-plt.figure()
-plt.title("Importancia de las características")
-plt.bar(range(Xesc.shape[1]), importances[indices], align="center")
-plt.xticks(range(Xesc.shape[1]), indices)
-plt.xlabel("Características")
-
-var = recursive_feature_selection(Xesc,y_mod,LogisticRegression(),8) # seleccionar 5 variables
 
 def medir_modelos(modelos,scoring,X,y,cv):
     "Recibe como parametros una lista de modelos, la metrica con la cual se quiere evaluar su desempeño, la base de datos escalada y codificada, la variable objetivo y el numero de folds para la validación cruzada."
@@ -95,4 +92,11 @@ def medir_modelos(modelos,scoring,X,y,cv):
     metric_modelos.columns=["decision_tree","random_forest","reg_logistic"]
     return metric_modelos   
 
-medir_modelos(modelos,"f1",Xesc,y_mod,5)
+mod = medir_modelos(modelos,"recall",Xesc,y_mod,5)
+
+
+f1s= mod
+
+f1s.columns=[ 'dt_sel', 'rf_sel', 'rl_Sel']
+f1s.plot(kind='box') # Boxplot de f1 score para cada modelo con todas las variables y con las variables seleccionadas
+f1s.mean()  # Media de rendimiendo para cada variable 
