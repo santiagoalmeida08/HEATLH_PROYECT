@@ -30,6 +30,8 @@ cur.fetchall()
 hr = pd.read_sql('SELECT * FROM hrmin', conn)
 
 hr.dtypes
+
+
 #Resumen de variables categoricas 
 
 def cat_summary(dataframe, col_name, plot=False):
@@ -71,6 +73,7 @@ hr_num = hr.iloc[:, 0:7] #seleccionamos variables numericas
 
 
 for column in hr_num.columns:
+
     #crear base
     base = hr.groupby([column])[['readmitted']].count().reset_index().sort_values(column, ascending = False)
 
@@ -85,7 +88,15 @@ for column in hr_num.columns:
         template = 'simple_white',
         title_x = 0.5)
 
+
     fig.show()
+    
+for column in hr_num.columns:
+    fig,ax = plt.subplots(1,2,figsize=(15,5))
+    ax[0].hist(x = hr_num[column], bins=70)
+    ax[0].set_title(f'Histograma de {column}')
+    ax[1].boxplot(hr_num[column])
+    ax[1].set_title(f'Boxplot de {column}')
 
 
 """
@@ -121,6 +132,34 @@ for column in hr_num.columns:
     
 """
 
+
+#Tratamiento de valores atipicos
+# tratar variables n_medication,n_outpatient,n_inpatient,n_emergency
+
+hr_at = hr.copy()
+
+hr_at = hr_at[(hr_at['n_lab_procedures']<=100)] # 101 registros
+hr_at = hr_at[(hr_at['n_medications']<=35)] #637 registros
+hr_at = hr_at[hr_at['n_outpatient']<=6]
+hr_at = hr_at[(hr_at['n_emergency']<=3)] #  854 registros
+hr_at = hr_at[(hr_at['n_inpatient']<=5)] #  854 registros
+
+
+hr_full = hr_at.copy()
+hr_full['n_medications'].describe()
+hr_full['n_inpatient'].describe()
+hr_full['n_outpatient'].describe()
+hr_full['n_emergency'].describe()
+
+for column in hr_full.columns:
+    fig,ax = plt.subplots(1,2,figsize=(15,5))
+    ax[0].hist(x = hr_full[column], bins=70)
+    ax[0].set_title(f'Histograma de {column}')
+    ax[1].boxplot(hr_full[column])
+    ax[1].set_title(f'Boxplot de {column}')
+    
+
+
 # Analisis de correlacion entre variables numericas #
 correlation = hr_num.corr()
 plt.figure(figsize=(15, 15))
@@ -135,12 +174,12 @@ la correlación no supera un valor de 0,5 por lo cual ambas variables se seguira
 
 # Analisis de variables categoricas #
 
-hr_cat = hr.iloc[:, 8:] #seleccionamos variables categoricas
+hr_cat = hr.iloc[:, 7:] #seleccionamos variables categoricas
 
 for column in  hr_cat.columns:
     if column != 'readmitted':
         plt.figure(figsize=(12,6))
-        sns.countplot(x=column, data=hr_cat)
+        sns.countplot(x=column, data=hr_cat,palette='viridis',hue=column)
         plt.title(column)
         
 c = hr_cat.loc[:, ['diag_1','diag_2','diag_3']]
@@ -164,6 +203,13 @@ c['diag_1'].value_counts()
 
 """    
 
+#ELiminar categoria Missing de diag_1,|diag_2,diag_3
+
+hr_full = hr_full[(hr_full['diag_1'] != 'missing')]
+hr_full = hr_full[(hr_full['diag_2'] != 'missing')]
+hr_full = hr_full[(hr_full['diag_3'] != 'missing')]
+
+
 #Analisis de variable obejtiivo
 sns.countplot(x= 'readmitted', data = hr_cat)
 plt.title('Readmitted')
@@ -181,3 +227,5 @@ fn.chi_square_test(hr_cat, 'readmitted')
 
 #Las variables referentes a als pruebas no representativas ; sin embargo es importante tener estos 
 #datos en cuenta al momento de proponer estrategias y concluir
+
+hr_full.to_sql('hr_full', conn, if_exists='replace', index=False)

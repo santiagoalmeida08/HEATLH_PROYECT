@@ -23,7 +23,7 @@ cur = conn.cursor()
 
 # cargar tabla
 
-df = pd.read_sql('SELECT *  from hrmin', conn)
+df = pd.read_sql('SELECT *  from hr_full', conn)
 df.info()
 df['edad'] = df['edad'].astype('object')
 # Variables explicativas
@@ -92,7 +92,7 @@ def medir_modelos(modelos,scoring,X,y,cv):
     metric_modelos.columns=["decision_tree","random_forest","reg_logistic"]
     return metric_modelos   
 
-mod = medir_modelos(modelos,"recall",Xesc,y_mod,10)
+mod = medir_modelos(modelos,"accuracy",Xesc,y_mod,10)
 
 
 f1s= mod
