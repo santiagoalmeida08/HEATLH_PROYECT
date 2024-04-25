@@ -46,13 +46,13 @@ def encode_data(df, list_le, list_dd,list_oe):
 def sel_variables(modelo,X,y,threshold): 
     """Recibe como parametros una lista de modelos, la base de datos escalada y codificada, treshold para seleccionar variables"""
     var_names_ac=np.array([])
-    for modelo in modelos:
-        modelo.fit(X,y)
-        sel = SelectFromModel(modelo, prefit=True,threshold=threshold)
-        var_names= modelo.feature_names_in_[sel.get_support()]
-        
-        var_names_ac=np.append(var_names_ac, var_names)
-        var_names_ac=np.unique(var_names_ac)
+    #for modelo in modelos:
+    modelo.fit(X,y)
+    sel = SelectFromModel(modelo, prefit=True,threshold=threshold)
+    var_names= modelo.feature_names_in_[sel.get_support()]
+    
+    var_names_ac=np.append(var_names_ac, var_names)
+    var_names_ac=np.unique(var_names_ac)
         
         
     
