@@ -74,7 +74,7 @@ var_select = fn.sel_variables(LogisticRegression(),Xesc1,y_mod,threshold="2*mean
 
 mod_tree = DecisionTreeClassifier()
 mod_rand = RandomForestClassifier()
-#mos_xgbosting = XGBClassifier()
+#mod_xgbosting = XGBClassifier()
 mod_log = LogisticRegression()
 modelos = list([mod_tree,mod_rand,mod_log])
 
@@ -92,7 +92,7 @@ def medir_modelos(modelos,scoring,X,y,cv):
     metric_modelos.columns=["decision_tree","random_forest","reg_logistic"]
     return metric_modelos   
 
-mod = medir_modelos(modelos,"recall",Xesc,y_mod,5)
+mod = medir_modelos(modelos,"recall",Xesc,y_mod,10)
 
 
 f1s= mod
