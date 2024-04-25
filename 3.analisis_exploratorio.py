@@ -30,6 +30,7 @@ cur.fetchall()
 hr = pd.read_sql('SELECT * FROM hrmin', conn)
 
 hr.dtypes
+#Resumen de variables categoricas 
 
 def cat_summary(dataframe, col_name, plot=False):
     print(pd.DataFrame({col_name: dataframe[col_name].value_counts(),
@@ -45,7 +46,7 @@ for col in cat_cols:
     cat_summary(hr, col, plot=False)
 
 
-
+#Resumen variables numericas
 def num_summary(dataframe, numerical_col, plot=False):
     quantiles = [ 0.20, 0.50, 0.80, 0.959]
     print(dataframe[numerical_col].describe(quantiles).T)
