@@ -15,6 +15,7 @@ from sklearn.pipeline import make_pipeline
 import funciones as fn
 from sklearn.feature_selection import SelectFromModel
 from sklearn import metrics
+from sklearn import svm
 
 # conexión a la base de datos
 
@@ -37,6 +38,7 @@ y_mod.value_counts()
 
 df.info()
 
+#### ESPAÑA #####
 x=x.drop(['diag_1','diag_2','diag_3','change'], axis=1)
 x=x[['time_in_hospital', 'n_lab_procedures', 'n_procedures', 'n_medications']]
 
@@ -114,7 +116,7 @@ def medir_modelos(modelos,scoring,X,y,cv):
         pdscores=pd.DataFrame(scores)
         metric_modelos=pd.concat([metric_modelos,pdscores],axis=1)
     
-    metric_modelos.columns=["decision_tree","random_forest","reg_logistic"]
+    metric_modelos.columns=["decision_tree","random_forest",    "reg_logistic"]
     return metric_modelos   
 
 mod = medir_modelos(modelos,"accuracy",Xesc,y_mod,3)
@@ -125,4 +127,87 @@ f1s= mod
 f1s.columns=[ 'dt_sel', 'rf_sel', 'rl_Sel']
 f1s.plot(kind='box') # Boxplot de f1 score para cada modelo con todas las variables y con las variables seleccionadas
 f1s.mean()  # Media de rendimiendo para cada variable 
+
+
+
+
+
+
+
+#############################################################################
+#importar train_test_split
+from sklearn.model_selection import train_test_split
+
+# DATAFRAME #
+
+df
+
+x = df.drop(['readmitted'], axis=1)
+y = df['readmitted']
+
+#encoding variables
+
+x_en = pd.get_dummies(x, drop_first=True)
+
+#escalar
+scaler = StandardScaler()
+x_esc = scaler.fit_transform(x_en)
+
+xtrain, xtest, ytrain, ytest = train_test_split(x_esc, y, test_size=0.3, random_state=42)
+
+
+#### Evaluacion varios modelos 
+
+mod_tree= DecisionTreeClassifier()
+mod_rand = RandomForestClassifier()
+#mod_xgbosting = XGBClassifier()
+mod_log = LogisticRegression( max_iter=1000)
+mod_svm = svm.SVC()
+
+list_mod = ([mod_tree,mod_rand,mod_log,mod_svm])
+
+def modelos(list_mod, xtrain, ytrain, xtest, ytest):
+    metrics_mod = pd.DataFrame()
+    list_train = []
+    list_test = []
+    for modelo in list_mod:
+        modelo.fit(xtrain,ytrain)
+        y_pred = modelo.predict(xtest)
+        score_train = metrics.accuracy_score(ytrain,modelo.predict(xtrain)) #metrica entrenamiento  
+        score_test = metrics.accuracy_score(ytest,y_pred) #metrica test
+        z= ['mod_tree','mod_rand','mod_log','mod_svm']
+        modelos = pd.DataFrame(z)
+        list_test.append(score_test)
+        list_train.append(score_train)
+        pdscores_train = pd.DataFrame(list_train)
+        pdscroestest = pd.DataFrame(list_test)
+        
+        metrics_mod = pd.concat([modelos, pdscores_train, pdscroestest], axis=1)
+        metrics_mod.columns = ['modelo','score_train','score_test']
+    return metrics_mod
+
+modelos(list_mod, xtrain, ytrain, xtest, ytest)
+
+#MEJOR MODELO REGRESION LOGISTICA 
+
+
+#Modelo ---- evaluar desempeño para cada modelo 
+
+mod_reg = LogisticRegression( max_iter=1000)
+
+
+mod_reg.fit(xtrain, ytrain)
+
+y_pred = mod_reg.predict(xtest)
+
+# Matriz de confusion y metricas
+
+from sklearn.metrics import classification_report
+
+cm = metrics.confusion_matrix(ytest, y_pred)
+print(cm)
+
+print(classification_report(ytest, y_pred))
+
+
 
