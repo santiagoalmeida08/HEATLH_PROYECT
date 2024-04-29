@@ -28,7 +28,7 @@ cur = conn.cursor()
 
 df = pd.read_sql('SELECT *  from hr_full', conn)
 df.info()
-df['edad'] = df['edad'].astype('object')
+#df['edad'] = df['edad'].astype('object')
 # Variables explicativas
 
 x = df.drop(['readmitted'], axis=1)
@@ -41,7 +41,7 @@ y_mod.value_counts()
 df.info()
 
 """
-#### ESPAÑA #####
+#### ----- #####
 x=x.drop(['diag_1','diag_2','diag_3','change'], axis=1)
 x=x[['time_in_hospital', 'n_lab_procedures', 'n_procedures', 'n_medications']]
 
@@ -213,27 +213,60 @@ modelos(list_mod, xtrain, ytrain, xtest, ytest)
 
 #MEJOR MODELO REGRESION LOGISTICA 
 
-#Modelo ---- evaluar desempeño para cada modelo 
-
 mod_reg = LogisticRegression( max_iter=1000)
-
 
 mod_reg.fit(xtrain, ytrain)
 
 y_pred = mod_reg.predict(xtest)
 
-# Matriz de confusion y metricas
+# Classification report
+
+print(metrics.classification_report(ytest, y_pred))
+
+# Matriz de confusion
 
 from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 cm = metrics.confusion_matrix(ytest, y_pred)
+cmd = ConfusionMatrixDisplay(cm, display_labels=['no','yes'])
+cmd.plot()
 print(cm)
 
-print(classification_report(ytest, y_pred))
+
+# Ajuste de hiperparametros
+
+params = {
+          'solver' : ['newton-cg', 'lbfgs', 'liblinear'],
+          'max_iter' : [100, 1000, 10000]}
+
+from sklearn.model_selection import RandomizedSearchCV
+
+h1 = RandomizedSearchCV(LogisticRegression(), params, cv=5, n_iter=100, random_state=42, n_jobs=-1, scoring='recall')
+
+h1.fit(xtrain,ytrain)
 
 
+resultados = h1.cv_results_
+h1.best_params_
+pd_resultados=pd.DataFrame(resultados)
+pd_resultados[["params","mean_test_score"]].sort_values(by="mean_test_score", ascending=False) 
 
+mod_hiper = h1.best_estimator_
 
+### DESEMPEÑO #evaluacion de modelo final con cross validation
+
+y_pred2 = mod_hiper.predict(xtest)
+
+rs_accuracy = metrics.accuracy_score(ytest,y_pred2)
+rs_precision = metrics.precision_score(ytest,y_pred2)
+rs_recall = metrics.recall_score(ytest,y_pred2)
+rs_f1_score = metrics.f1_score(ytest,y_pred2)
+
+print('accuracy score: %.2f' % rs_accuracy)
+print('precision score: %.2f' % rs_precision)
+print('recall score: %.2f' % rs_recall)
+print('f1 score: %.2f' %  rs_f1_score)
 
 ######## RED NEURONAL ###################
 
