@@ -16,7 +16,9 @@ import funciones as fn
 from sklearn.feature_selection import SelectFromModel
 from sklearn import metrics
 from sklearn import svm
-
+from sklearn.model_selection import train_test_split
+import funciones as fn
+from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
 # conexión a la base de datos
 
 conn = sql.connect('data//readmissions.db')
@@ -38,6 +40,7 @@ y_mod.value_counts()
 
 df.info()
 
+"""
 #### ESPAÑA #####
 x=x.drop(['diag_1','diag_2','diag_3','change'], axis=1)
 x=x[['time_in_hospital', 'n_lab_procedures', 'n_procedures', 'n_medications']]
@@ -127,16 +130,12 @@ f1s= mod
 f1s.columns=[ 'dt_sel', 'rf_sel', 'rl_Sel']
 f1s.plot(kind='box') # Boxplot de f1 score para cada modelo con todas las variables y con las variables seleccionadas
 f1s.mean()  # Media de rendimiendo para cada variable 
-
-
-
-
-
+"""
 
 
 #############################################################################
 #importar train_test_split
-from sklearn.model_selection import train_test_split
+
 
 # DATAFRAME #
 
@@ -144,16 +143,40 @@ df
 
 x = df.drop(['readmitted'], axis=1)
 y = df['readmitted']
+y_mod = y.replace({'yes':1, 'no':0})
 
 #encoding variables
 
-x_en = pd.get_dummies(x, drop_first=True)
+list_dumies = [x.columns[i] for i in range(len(x.columns)) if x[x.columns[i]].dtype == 'object' and len(x[x.columns[i]].unique()) > 2]
+x['edad'] = x['edad'].astype('object')
+list_ordinal = ['edad']
+list_label = [x.columns[i] for i in range(len(x.columns)) if x[x.columns[i]].dtype == 'object' and len(x[x.columns[i]].unique()) == 2]
+
+def encode_data(df, list_le, list_dd,list_oe): 
+    df_encoded = df.copy()   
+    "Recibe como parametros la base de datos y las listas de variables que se quieren codificar"
+    #Get dummies
+    df_encoded=pd.get_dummies(df_encoded,columns=list_dd)
+    
+    # Ordinal Encoding
+    oe = OrdinalEncoder()
+    for col in list_oe:
+        df_encoded[col] = oe.fit_transform(df_encoded[[col]])
+    
+    # Label Encoding
+    le = LabelEncoder()
+    for col in list_le:
+        df_encoded[col] = le.fit_transform(df_encoded[col])
+    
+    return df_encoded
+
+x_en = encode_data(x, list_label, list_dumies,list_ordinal)
 
 #escalar
 scaler = StandardScaler()
 x_esc = scaler.fit_transform(x_en)
 
-xtrain, xtest, ytrain, ytest = train_test_split(x_esc, y, test_size=0.3, random_state=42)
+xtrain, xtest, ytrain, ytest = train_test_split(x_esc, y_mod, test_size=0.2, random_state=42)
 
 
 #### Evaluacion varios modelos 
@@ -190,7 +213,6 @@ modelos(list_mod, xtrain, ytrain, xtest, ytest)
 
 #MEJOR MODELO REGRESION LOGISTICA 
 
-
 #Modelo ---- evaluar desempeño para cada modelo 
 
 mod_reg = LogisticRegression( max_iter=1000)
@@ -209,5 +231,28 @@ print(cm)
 
 print(classification_report(ytest, y_pred))
 
+
+
+
+
+######## RED NEURONAL ###################
+
+#importar paquetes para redes neuronales
+from tensorflow import keras    
+
+ann1 = keras.models.Sequential([
+    keras.layers.Dense(128,activation ='sigmoid'),
+    keras.layers.Dense(64,activation ='sigmoid'),
+    keras.layers.Dense(32,activation ='sigmoid'),
+    keras.layers.Dense(3,activation ='softmax') # en este casp utilizamos 3 neuronas en la capa de salida ya que la variable respuesta es categorica y cuenta con 3 categorias
+                                                #ademas la funcion activation depende si trabajamos regresion o clasificacion (softmax)
+])
+
+l = keras.losses.SparseCategoricalCrossentropy()
+m = keras.metrics.SparseCategoricalAccuracy()
+
+ann1.compile(loss=l,metrics = m)
+
+ann1.fit(xtrain,ytrain,epochs = 5,validation_data=(xtest,ytest))
 
 
