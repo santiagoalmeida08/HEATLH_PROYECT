@@ -24,6 +24,9 @@ from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
 conn = sql.connect('data//readmissions.db')
 cur = conn.cursor()
 
+
+cur.execute('SELECT name FROM sqlite_master WHERE type="table"')
+cur.fetchall()
 # cargar tabla
 
 df = pd.read_sql('SELECT *  from hr_full', conn)
@@ -254,7 +257,7 @@ pd_resultados[["params","mean_test_score"]].sort_values(by="mean_test_score", as
 
 mod_hiper = h1.best_estimator_
 
-### DESEMPEÑO #evaluacion de modelo final con cross validation
+### DESEMPEÑO 
 
 y_pred2 = mod_hiper.predict(xtest)
 
@@ -267,6 +270,8 @@ print('accuracy score: %.2f' % rs_accuracy)
 print('precision score: %.2f' % rs_precision)
 print('recall score: %.2f' % rs_recall)
 print('f1 score: %.2f' %  rs_f1_score)
+
+
 
 ######## RED NEURONAL ###################
 
