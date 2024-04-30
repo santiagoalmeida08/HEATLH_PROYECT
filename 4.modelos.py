@@ -99,4 +99,4 @@ f1s= mod
 
 f1s.columns=[ 'dt_sel', 'rf_sel', 'rl_Sel']
 f1s.plot(kind='box') # Boxplot de f1 score para cada modelo con todas las variables y con las variables seleccionadas
-f1s.mean()  # Media de rendimiendo para cada variable 
+f1s.mean()  # Media de rendimiendo para cada modelo 
