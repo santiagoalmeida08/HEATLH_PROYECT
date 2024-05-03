@@ -280,9 +280,9 @@ from tensorflow import keras
 
 ann1 = keras.models.Sequential([
     keras.layers.Dense(128,activation ='sigmoid'),
-    keras.layers.Dense(64,activation ='sigmoid'),
-    keras.layers.Dense(32,activation ='sigmoid'),
-    keras.layers.Dense(3,activation ='softmax') # en este casp utilizamos 3 neuronas en la capa de salida ya que la variable respuesta es categorica y cuenta con 3 categorias
+    keras.layers.Dense(64,activation ='relu'),
+    keras.layers.Dense(32,activation ='tanh'),
+    keras.layers.Dense(3,activation ='sigmoid') # en este casp utilizamos 3 neuronas en la capa de salida ya que la variable respuesta es categorica y cuenta con 3 categorias
                                                 #ademas la funcion activation depende si trabajamos regresion o clasificacion (softmax)
 ])
 
@@ -291,4 +291,76 @@ m = keras.metrics.SparseCategoricalAccuracy()
 
 ann1.compile(loss=l,metrics = m)
 
-ann1.fit(xtrain,ytrain,epochs = 5,validation_data=(xtest,ytest))
+ann1.fit(xtrain,ytrain,epochs = 15,validation_data=(xtest,ytest))
+
+#PRIMER DIAGNOSTICO -- UNDERFITTING 
+
+#Diagnostico por grilla 
+import keras_tuner as kt 
+
+hp = kt.HyperParameters() #se definen hiperparametros
+
+def mejor_m(hp):
+    opti = hp.Choice('OPTI', ['adam','rd2'])
+    fa = hp.Choice('FA', ['relu','tanh','sigmoid'])
+    
+    ann2 = keras.models.Sequential([
+    keras.layers.Dense(512, input_shape = (43,), activation=fa), 
+    
+    keras.layers.Dense(256,activation=fa),
+    
+    keras.layers.Dense(128,activation=fa),
+    
+    keras.layers.Dense(64,activation=fa),
+   
+    keras.layers.Dense(32, activation=fa),
+ 
+    keras.layers.Dense(2, activation='sigmoid')
+    ])
+
+    if opti == 'adam':
+        opti2 = keras.optimizers.Adam(learning_rate=0.001)
+    else:
+        opti2 = keras.optimizers.RMSprop(learning_rate=0.001) 
+    
+    ann2.compile(optimizer= opti2, loss= l, metrics= m)
+    
+    return ann2
+
+
+# ANALISIS MODELO GANADOR 
+
+search_model = kt.RandomSearch(
+    hypermodel= mejor_m ,
+    hyperparameters= hp,
+    objective= kt.Objective('val_sparse_categorical_accuracy',direction= 'max'),
+    max_trials= 10,
+    overwrite = True,
+    project_name = 'rest_afin' 
+)
+
+search_model.search(xtrain,ytrain,epochs = 20,validation_data=(xtest,ytest)) 
+search_model.results_summary()
+
+##MAXIMO RENDIMIENTO, accuracy de 61%
+
+#Selección mejor modelo
+win_model = search_model.get_best_models(1)[0]
+win_model.build()
+win_model.summary()
+
+
+#porque las predicciones no estan en 1 y 0 ???
+#Predicciones
+predicciones = win_model.predict(xtest)
+
+#Transformación
+y_pred = np.array(predicciones)[:,0]
+y_test = np.array(ytest)
+
+y_pred.shape
+y_test.shape
+
+#Metricas
+
+
