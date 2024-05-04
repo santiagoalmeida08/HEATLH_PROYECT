@@ -271,7 +271,17 @@ print('precision score: %.2f' % rs_precision)
 print('recall score: %.2f' % rs_recall)
 print('f1 score: %.2f' %  rs_f1_score)
 
+#DEFINIR PROBABILIDAD PARA LA CLASIFICACIÓN
+probabilidades = mod_hiper.predict_proba(xtest)[:, 1]#definir las probabilidades asociadas a la clase 1 (readmitido)
 
+umbral = 0.35  # Puedes ajustar este valor según tus necesidades
+predicciones_con_umbral = (probabilidades > umbral).astype(int)
+print(classification_report(ytest, predicciones_con_umbral))
+#matrix de confusión con las nuevas probabilidades
+cm2 = metrics.confusion_matrix(ytest, predicciones_con_umbral)
+cmd2 = ConfusionMatrixDisplay(cm, display_labels=['no','yes'])
+cmd2.plot()
+print(cm2)
 
 ######## RED NEURONAL ###################
 
