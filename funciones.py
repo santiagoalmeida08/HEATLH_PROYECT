@@ -7,6 +7,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
 import numpy as np
 from sklearn.feature_selection import SelectFromModel
+import joblib
 
 
 def ejecutar_sql (nombre_archivo, cur):
@@ -71,3 +72,30 @@ def medir_modelos(modelos,scoring,X,y,cv):
     
     metric_modelos.columns=["gard_boost","decision_tree","random_forest","reg_logistic"]
     return metric_modelos   
+
+
+
+
+# FUNCION 6# Esta función prepara la base de datos con informacion nueva para hacer predicciones
+
+def preparar_datos (df):
+    
+    #Se realizan los cambios necesarios para que la base nueva tenga el mismo formato que la base con la que se entreno el modelo
+    df['edad'] = df['edad'].astype('object')
+    # Cargar las listas, escalador y variables necesarias para realizar las predicciones
+    list_dumies=joblib.load("salidas\\list_dumies.pkl")
+    list_label=joblib.load("salidas\\list_label.pkl")
+    list_ordinal=joblib.load("salidas\\list_ordinal.pkl")
+    var_names=joblib.load("salidas\\var_names.pkl")
+    scaler=joblib.load("salidas\\scaler.pkl") 
+
+    #Ejecutar funciones de transformaciones 
+    df_dummies = df.copy()
+    df_dummies= encode_data(df, list_label, list_dumies,list_ordinal)
+    
+    #Escalar variables
+    X2=scaler.transform(df_dummies)
+    X=pd.DataFrame(X2,columns=df_dummies.columns)
+    X=X[var_names]
+    
+    return X
