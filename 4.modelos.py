@@ -12,7 +12,6 @@ from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import RandomOverSampler
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
-import funciones as fn
 from sklearn.feature_selection import SelectFromModel
 from sklearn import metrics
 from sklearn import svm
@@ -23,6 +22,9 @@ import joblib
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.model_selection import RandomizedSearchCV
+import keras_tuner as kt 
+from tensorflow import keras    
+
 # conexión a la base de datos
 
 conn = sql.connect('data//readmissions.db')
@@ -36,12 +38,7 @@ cur.fetchall()
 df = pd.read_sql('SELECT *  from hr_full', conn)
 df.info()
 
-
-
 #############################################################################
-#importar train_test_split
-
-
 # DATAFRAME #
 
 x = df.drop(['readmitted'], axis=1)
@@ -55,97 +52,43 @@ x['edad'] = x['edad'].astype('object')
 list_ordinal = ['edad']
 list_label = [x.columns[i] for i in range(len(x.columns)) if x[x.columns[i]].dtype == 'object' and len(x[x.columns[i]].unique()) == 2]
 
-def encode_data(df, list_le, list_dd,list_oe): 
-    df_encoded = df.copy()   
-    "Recibe como parametros la base de datos y las listas de variables que se quieren codificar"
-    #Get dummies
-    df_encoded=pd.get_dummies(df_encoded,columns=list_dd)
-    
-    # Ordinal Encoding
-    oe = OrdinalEncoder()
-    for col in list_oe:
-        df_encoded[col] = oe.fit_transform(df_encoded[[col]])
-    
-    # Label Encoding
-    le = LabelEncoder()
-    for col in list_le:
-        df_encoded[col] = le.fit_transform(df_encoded[col])
-    
-    return df_encoded
 
-x_en = encode_data(x, list_label, list_dumies,list_ordinal)
+x_en = fn.encode_data(x, list_label, list_dumies,list_ordinal)
 
 #escalar
 scaler = StandardScaler()
 x_esc = scaler.fit_transform(x_en)
 
-#Division 80-20
+#Division train-test / 80-20
 xtrain, xtest, ytrain, ytest = train_test_split(x_esc, y_mod, test_size=0.2, random_state=42)
 
 
-#### Evaluacion varios modelos 
-
+# Evaluacion varios modelos 
 mod_tree= DecisionTreeClassifier()
 mod_rand = RandomForestClassifier()
-#mod_xgbosting = XGBClassifier()
 mod_log = LogisticRegression( max_iter=1000)
 mod_svm = svm.SVC()
-
 list_mod = ([mod_tree,mod_rand,mod_log,mod_svm])
+fn.modelos(list_mod, xtrain, ytrain, xtest, ytest)
 
-def modelos(list_mod, xtrain, ytrain, xtest, ytest):
-    metrics_mod = pd.DataFrame()
-    list_train = []
-    list_test = []
-    for modelo in list_mod:
-        modelo.fit(xtrain,ytrain)
-        y_pred = modelo.predict(xtest)
-        score_train = metrics.accuracy_score(ytrain,modelo.predict(xtrain)) #metrica entrenamiento  
-        score_test = metrics.accuracy_score(ytest,y_pred) #metrica test
-        z= ['mod_tree','mod_rand','mod_log','mod_svm']
-        modelos = pd.DataFrame(z)
-        list_test.append(score_test)
-        list_train.append(score_train)
-        pdscores_train = pd.DataFrame(list_train)
-        pdscroestest = pd.DataFrame(list_test)
-        
-        metrics_mod = pd.concat([modelos, pdscores_train, pdscroestest], axis=1)
-        metrics_mod.columns = ['modelo','score_train','score_test']
-    return metrics_mod
-
-modelos(list_mod, xtrain, ytrain, xtest, ytest)
-
-#MEJOR MODELO REGRESION LOGISTICA 
-
+#Best model: Logistic Regression
 mod_reg = LogisticRegression( max_iter=1000)
-
 mod_reg.fit(xtrain, ytrain)
-
 y_pred = mod_reg.predict(xtest)
 
-# Classification report
-
+# Classification report & confusion matrix
 print(metrics.classification_report(ytest, y_pred))
-
-# Matriz de confusion
-
 cm = metrics.confusion_matrix(ytest, y_pred)
 cmd = ConfusionMatrixDisplay(cm, display_labels=['no','yes'])
 cmd.plot()
 
-
-# Ajuste de hiperparametros
-
+# Afinamiento de hiperparametros
 params = {
           'solver' : ['newton-cg', 'lbfgs', 'liblinear'],
           'max_iter' : [100, 1000, 10000]}
 
-
 h1 = RandomizedSearchCV(LogisticRegression(), params, cv=5, n_iter=100, random_state=42, n_jobs=-1, scoring='recall')
-
 h1.fit(xtrain,ytrain)
-
-
 resultados = h1.cv_results_
 h1.best_params_
 pd_resultados=pd.DataFrame(resultados)
@@ -153,7 +96,7 @@ pd_resultados[["params","mean_test_score"]].sort_values(by="mean_test_score", as
 
 mod_hiper = h1.best_estimator_ #modelo con ajuste de hiperparametros 
 
-### DESEMPEÑO 
+# Desempeño modelo con ajuste de hiperparametros
 
 y_pred2 = mod_hiper.predict(xtest)
 
@@ -184,21 +127,16 @@ print('recall score: %.2f' % r_recall)
 
 
 # Exportar modelo ganador #
-
-#var_names= df.drop(['readmitted'], axis=1).columns
 joblib.dump(mod_hiper, "salidas\\final.pkl") # Modelo ganador con afinamiento de hipermarametros 
-                                                #FALTA GUARDAR MODELO CON UMBRAL
 joblib.dump(list_label, "salidas\\list_label.pkl") 
 joblib.dump(list_dumies, "salidas\\list_dumies.pkl") 
 joblib.dump(list_ordinal, "salidas\\list_ordinal.pkl")  
-#joblib.dump(var_names, "salidas\\var_names.pkl") ### para variables con que se entrena modelo
 joblib.dump(scaler, "salidas\\scaler.pkl") ## para normalizar datos con MinMaxScaler
 
 
 ######## RED NEURONAL ###################
 
 #importar paquetes para redes neuronales
-from tensorflow import keras    
 
 ann1 = keras.models.Sequential([
     keras.layers.Dense(128,activation ='sigmoid'),
@@ -218,42 +156,11 @@ ann1.fit(xtrain,ytrain,epochs = 15,validation_data=(xtest,ytest))
 #PRIMER DIAGNOSTICO -- UNDERFITTING 
 
 #Diagnostico por grilla 
-import keras_tuner as kt 
-
 hp = kt.HyperParameters() #se definen hiperparametros
 
-def mejor_m(hp):
-    opti = hp.Choice('OPTI', ['adam','rd2'])
-    fa = hp.Choice('FA', ['relu','tanh','sigmoid'])
-    
-    ann2 = keras.models.Sequential([
-    keras.layers.Dense(512, input_shape = (43,), activation=fa), 
-    
-    keras.layers.Dense(256,activation=fa),
-    
-    keras.layers.Dense(128,activation=fa),
-    
-    keras.layers.Dense(64,activation=fa),
-   
-    keras.layers.Dense(32, activation=fa),
- 
-    keras.layers.Dense(2, activation='sigmoid')
-    ])
-
-    if opti == 'adam':
-        opti2 = keras.optimizers.Adam(learning_rate=0.001)
-    else:
-        opti2 = keras.optimizers.RMSprop(learning_rate=0.001) 
-    
-    ann2.compile(optimizer= opti2, loss= l, metrics= m)
-    
-    return ann2
-
-
 # ANALISIS MODELO GANADOR 
-
 search_model = kt.RandomSearch(
-    hypermodel= mejor_m ,
+    hypermodel= fn.mejor_m ,
     hyperparameters= hp,
     objective= kt.Objective('val_sparse_categorical_accuracy',direction= 'max'),
     max_trials= 10,

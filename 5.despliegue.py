@@ -10,7 +10,7 @@
 
 import sqlite3 as sql
 
-import funciones as funciones  #archivo de funciones propias
+import funciones as fn  #archivo de funciones propias
 import pandas as pd ### para manejo de datos
 import joblib
 import numpy as np
@@ -41,30 +41,8 @@ df.columns
 
 # Transformación de datos para realizar predicciones
 
-def preparar_datos (df):
-    
-    #Se realizan los cambios necesarios para que la base nueva tenga el mismo formato que la base con la que se entreno el modelo
-    df['edad'] = df['edad'].astype('object')
-    # Cargar las listas, escalador y variables necesarias para realizar las predicciones
-    list_dumies=joblib.load("salidas\\list_dumies.pkl")
-    list_label=joblib.load("salidas\\list_label.pkl")
-    list_ordinal=joblib.load("salidas\\list_ordinal.pkl")
-    #var_names=joblib.load("salidas\\var_names.pkl")
-    scaler=joblib.load("salidas\\scaler.pkl") 
 
-    #Ejecutar funciones de transformaciones 
-    df_dummies = df.copy()
-    df_dummies= funciones.encode_data(df, list_label, list_dumies,list_ordinal)
-    
-    #Escalar variables
-    df_dummies=df_dummies.drop(['readmitted'],axis=1)
-    X2=scaler.transform(df_dummies)
-    X=pd.DataFrame(X2,columns=df_dummies.columns)
-    #X=X[var_names]
-    
-    return X
-
-df_t=preparar_datos(df) 
+df_t=fn.preparar_datos(df) 
 df_t.columns
 
 #Cargar modelo y realizar predicciones con el umbral
