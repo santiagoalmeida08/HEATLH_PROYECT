@@ -67,24 +67,20 @@ def preparar_datos (df):
 df_t=preparar_datos(df) 
 df_t.columns
 
-predicciones = final.predict(df_t) # se realiza la predicción
-#Cargar modelo y predecir
-final1 = joblib.load("salidas\\rf_final.pkl")
-predicciones=final1.predict(df_t) # se realiza la predicción
-#pd_pred=pd.DataFrame(predicciones, columns=['Attrition_17']) # se agrega la variable attrition_17 que es la predicción referente al abandono de los empleados
+#Cargar modelo y realizar predicciones con el umbral
+probabilidades = final.predict_proba(df_t)[:, 1]#definir las probabilidades asociadas a la clase 1 (readmitido)
+umbral = 0.35  # Puedes ajustar este valor según tus necesidades
+predicciones= (probabilidades > umbral).astype(int)
 
-#Crear base con predicciones
-#perf_pred=pd.concat([df['EmployeeID'],df_t,pd_pred],axis=1)
-
-#perf_pred['Attrition_17'].value_counts() # Verificar valores nulos
-   
 # Importancia de las variables del modelo
-importances = final1.feature_importances_
-feature_importances_df = pd.DataFrame({'Feature': df_t.columns, 'Importance': importances})
-feature_importances_df = feature_importances_df.sort_values(by='Importance', ascending=False) #Base de datos con la importancia de mayor a menor
-#En la tabla podemos observar que el salario es la variable más importante para predecir la rotación de empleados; esto es importante ya que como se 
-#mencionó en el análisis exploratorio, los empleados que ganan menos eran los que abandonaban la empresa.
- 
+coeficientes = final.coef_[0]
+feature_importances_df = pd.DataFrame({'Feature': df_t.columns, 'coef': coeficientes})
+feature_importances_df = feature_importances_df.sort_values(by='coef', ascending=False) #Base de datos con la importancia de mayor a menor
+
 # Exportar predicciones e importancia de variables a excel
+predicciones=pd.DataFrame(predicciones)
+predicciones = predicciones.replace({1:'si',0:'no'})
+
+#Asumimos que el index de la tabla original es el id de cada paciente 
 predicciones.to_excel("salidas\\predicciones.xlsx")  #Exportar todas las  predicciones 
 feature_importances_df.to_excel("salidas\\importancia_variables.xlsx") #Exportar importancia de variables
