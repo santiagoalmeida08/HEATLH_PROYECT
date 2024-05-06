@@ -19,6 +19,7 @@ from sklearn import svm
 from sklearn.model_selection import train_test_split
 import funciones as fn
 from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
+import joblib
 # conexión a la base de datos
 
 conn = sql.connect('data//readmissions.db')
@@ -191,6 +192,19 @@ cmd2 = ConfusionMatrixDisplay(cm, display_labels=['no','yes'])
 cmd2.plot()
 print(cm2)
 
+
+
+# Exportar modelo ganador #
+
+#var_names= df.drop(['readmitted'], axis=1).columns
+joblib.dump(predicciones_con_umbral, "salidas\\final.pkl") # Modelo ganador con afinamiento de hipermarametros 
+joblib.dump(list_label, "salidas\\list_label.pkl") 
+joblib.dump(list_dumies, "salidas\\list_dumies.pkl") 
+joblib.dump(list_ordinal, "salidas\\list_ordinal.pkl")  
+#joblib.dump(var_names, "salidas\\var_names.pkl") ### para variables con que se entrena modelo
+joblib.dump(scaler, "salidas\\scaler.pkl") ## para normalizar datos con MinMaxScaler
+
+
 ######## RED NEURONAL ###################
 
 #importar paquetes para redes neuronales
@@ -279,14 +293,4 @@ y_test = np.array(ytest)
 y_pred.shape
 y_test.shape
 
-#Metricas
 
-# Exportar modelo ganador #
-import joblib
-#var_names= df.drop(['readmitted'], axis=1).columns
-joblib.dump(predicciones_con_umbral, "salidas\\final.pkl") # Modelo ganador con afinamiento de hipermarametros 
-joblib.dump(list_label, "salidas\\list_label.pkl") 
-joblib.dump(list_dumies, "salidas\\list_dumies.pkl") 
-joblib.dump(list_ordinal, "salidas\\list_ordinal.pkl")  
-#joblib.dump(var_names, "salidas\\var_names.pkl") ### para variables con que se entrena modelo
-joblib.dump(scaler, "salidas\\scaler.pkl") ## para normalizar datos con MinMaxScaler
