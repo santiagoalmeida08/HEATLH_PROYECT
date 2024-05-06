@@ -20,6 +20,9 @@ from sklearn.model_selection import train_test_split
 import funciones as fn
 from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
 import joblib
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.model_selection import RandomizedSearchCV
 # conexión a la base de datos
 
 conn = sql.connect('data//readmissions.db')
@@ -32,17 +35,7 @@ cur.fetchall()
 
 df = pd.read_sql('SELECT *  from hr_full', conn)
 df.info()
-#df['edad'] = df['edad'].astype('object')
-# Variables explicativas
 
-x = df.drop(['readmitted'], axis=1)
-y = df['readmitted']
-y_mod = y.replace({'yes':1, 'no':0})
-
-y_mod.value_counts()
-
-
-df.info()
 
 
 #############################################################################
@@ -50,8 +43,6 @@ df.info()
 
 
 # DATAFRAME #
-
-df
 
 x = df.drop(['readmitted'], axis=1)
 y = df['readmitted']
@@ -88,6 +79,7 @@ x_en = encode_data(x, list_label, list_dumies,list_ordinal)
 scaler = StandardScaler()
 x_esc = scaler.fit_transform(x_en)
 
+#Division 80-20
 xtrain, xtest, ytrain, ytest = train_test_split(x_esc, y_mod, test_size=0.2, random_state=42)
 
 
@@ -137,13 +129,9 @@ print(metrics.classification_report(ytest, y_pred))
 
 # Matriz de confusion
 
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-
 cm = metrics.confusion_matrix(ytest, y_pred)
 cmd = ConfusionMatrixDisplay(cm, display_labels=['no','yes'])
 cmd.plot()
-print(cm)
 
 
 # Ajuste de hiperparametros
@@ -152,7 +140,6 @@ params = {
           'solver' : ['newton-cg', 'lbfgs', 'liblinear'],
           'max_iter' : [100, 1000, 10000]}
 
-from sklearn.model_selection import RandomizedSearchCV
 
 h1 = RandomizedSearchCV(LogisticRegression(), params, cv=5, n_iter=100, random_state=42, n_jobs=-1, scoring='recall')
 
@@ -164,7 +151,7 @@ h1.best_params_
 pd_resultados=pd.DataFrame(resultados)
 pd_resultados[["params","mean_test_score"]].sort_values(by="mean_test_score", ascending=False) 
 
-mod_hiper = h1.best_estimator_
+mod_hiper = h1.best_estimator_ #modelo con ajuste de hiperparametros 
 
 ### DESEMPEÑO 
 
@@ -188,16 +175,19 @@ predicciones_con_umbral = (probabilidades > umbral).astype(int)
 print(classification_report(ytest, predicciones_con_umbral))
 #matrix de confusión con las nuevas probabilidades
 cm2 = metrics.confusion_matrix(ytest, predicciones_con_umbral)
-cmd2 = ConfusionMatrixDisplay(cm, display_labels=['no','yes'])
+cmd2 = ConfusionMatrixDisplay(cm2, display_labels=['no','yes'])
 cmd2.plot()
-print(cm2)
 
+
+r_recall = metrics.recall_score(ytest,predicciones_con_umbral)
+print('recall score: %.2f' % r_recall)
 
 
 # Exportar modelo ganador #
 
 #var_names= df.drop(['readmitted'], axis=1).columns
-joblib.dump(predicciones_con_umbral, "salidas\\final.pkl") # Modelo ganador con afinamiento de hipermarametros 
+joblib.dump(mod_hiper, "salidas\\final.pkl") # Modelo ganador con afinamiento de hipermarametros 
+                                                #FALTA GUARDAR MODELO CON UMBRAL
 joblib.dump(list_label, "salidas\\list_label.pkl") 
 joblib.dump(list_dumies, "salidas\\list_dumies.pkl") 
 joblib.dump(list_ordinal, "salidas\\list_ordinal.pkl")  
