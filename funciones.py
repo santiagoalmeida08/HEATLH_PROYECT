@@ -86,7 +86,7 @@ def preparar_datos (df):
     list_dumies=joblib.load("salidas\\list_dumies.pkl")
     list_label=joblib.load("salidas\\list_label.pkl")
     list_ordinal=joblib.load("salidas\\list_ordinal.pkl")
-    var_names=joblib.load("salidas\\var_names.pkl")
+    #var_names=joblib.load("salidas\\var_names.pkl")
     scaler=joblib.load("salidas\\scaler.pkl") 
 
     #Ejecutar funciones de transformaciones 
@@ -96,6 +96,6 @@ def preparar_datos (df):
     #Escalar variables
     X2=scaler.transform(df_dummies)
     X=pd.DataFrame(X2,columns=df_dummies.columns)
-    X=X[var_names]
+    #X=X[var_names]
     
     return X

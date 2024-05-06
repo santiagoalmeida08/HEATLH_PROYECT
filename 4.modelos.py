@@ -283,10 +283,10 @@ y_test.shape
 
 # Exportar modelo ganador #
 import joblib
-var_names= df.drop(['readmitted'], axis=1).columns
+#var_names= df.drop(['readmitted'], axis=1).columns
 joblib.dump(predicciones_con_umbral, "salidas\\final.pkl") # Modelo ganador con afinamiento de hipermarametros 
 joblib.dump(list_label, "salidas\\list_label.pkl") 
 joblib.dump(list_dumies, "salidas\\list_dumies.pkl") 
 joblib.dump(list_ordinal, "salidas\\list_ordinal.pkl")  
-joblib.dump(var_names, "salidas\\var_names.pkl") ### para variables con que se entrena modelo
+#joblib.dump(var_names, "salidas\\var_names.pkl") ### para variables con que se entrena modelo
 joblib.dump(scaler, "salidas\\scaler.pkl") ## para normalizar datos con MinMaxScaler

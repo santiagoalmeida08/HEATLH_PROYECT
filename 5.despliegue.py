@@ -20,7 +20,7 @@ final = joblib.load("salidas\\final.pkl")
 list_dumies=joblib.load("salidas\\list_dumies.pkl")
 list_label=joblib.load("salidas\\list_label.pkl")
 list_ordinal=joblib.load("salidas\\list_ordinal.pkl")
-var_names=joblib.load("salidas\\var_names.pkl")
+#var_names=joblib.load("salidas\\var_names.pkl")
 scaler=joblib.load("salidas\\scaler.pkl") 
 
 # Cargar base de datos con la que se quiere hacer predicciones
