@@ -1,31 +1,38 @@
+#En script se realiza el modelado de los datos utilizando algoritmos y tecnicas de machine learning
 
-#Paquetes necesarios.
+#1.Paquetes necesarios.
+#2.Cargar datos
+#3.División de variables predictoras y variable respuesta
+#4.Encoding variables
+#5.Escalado de variables
+#6.Division train-test / 80-20
+#7.Evaluacion varios modelos
+#8.Seleccion del mejor modelo
+#9.Ajuste de modelo con umbral de probabilidad
+#10.Exportar modelo ganador
+#11.Redes Neuronales
+
+#1.Paquetes necesarios.
 import pandas as pd
 import numpy as np
 import sqlite3 as sql
 import seaborn as sns
-from sklearn.feature_selection import RFE 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import  DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import RandomOverSampler
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import make_pipeline
-from sklearn.feature_selection import SelectFromModel
 from sklearn import metrics
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 import funciones as fn
-from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
 import joblib
 from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import  ConfusionMatrixDisplay
 from sklearn.model_selection import RandomizedSearchCV
 import keras_tuner as kt 
 from tensorflow import keras    
 
-# conexión a la base de datos
+#2.Cargar datos
 
 conn = sql.connect('data//readmissions.db')
 cur = conn.cursor()
@@ -33,19 +40,18 @@ cur = conn.cursor()
 
 cur.execute('SELECT name FROM sqlite_master WHERE type="table"')
 cur.fetchall()
+
 # cargar tabla
 
 df = pd.read_sql('SELECT *  from hr_full', conn)
 df.info()
 
-#############################################################################
-# DATAFRAME #
-
+#3.División de variables predictoras y variable respuesta
 x = df.drop(['readmitted'], axis=1)
 y = df['readmitted']
 y_mod = y.replace({'yes':1, 'no':0})
 
-#encoding variables
+#4.Encoding variables
 
 list_dumies = [x.columns[i] for i in range(len(x.columns)) if x[x.columns[i]].dtype == 'object' and len(x[x.columns[i]].unique()) > 2]
 x['edad'] = x['edad'].astype('object')
@@ -55,15 +61,15 @@ list_label = [x.columns[i] for i in range(len(x.columns)) if x[x.columns[i]].dty
 
 x_en = fn.encode_data(x, list_label, list_dumies,list_ordinal)
 
-#escalar
+#5.Escalado de variables 
 scaler = StandardScaler()
 x_esc = scaler.fit_transform(x_en)
 
-#Division train-test / 80-20
+#6.Division train-test / 80-20
 xtrain, xtest, ytrain, ytest = train_test_split(x_esc, y_mod, test_size=0.2, random_state=42)
 
 
-# Evaluacion varios modelos 
+#7.Evaluacion varios modelos 
 mod_tree= DecisionTreeClassifier()
 mod_rand = RandomForestClassifier()
 mod_log = LogisticRegression( max_iter=1000)
@@ -94,6 +100,7 @@ h1.best_params_
 pd_resultados=pd.DataFrame(resultados)
 pd_resultados[["params","mean_test_score"]].sort_values(by="mean_test_score", ascending=False) 
 
+#8.Seleccion del mejor modelo
 mod_hiper = h1.best_estimator_ #modelo con ajuste de hiperparametros 
 
 # Desempeño modelo con ajuste de hiperparametros
@@ -110,7 +117,7 @@ print('precision score: %.2f' % rs_precision)
 print('recall score: %.2f' % rs_recall)
 print('f1 score: %.2f' %  rs_f1_score)
 
-#DEFINIR PROBABILIDAD PARA LA CLASIFICACIÓN
+#9.Ajuste de modelo con umbral de probabilidad
 probabilidades = mod_hiper.predict_proba(xtest)[:, 1]#definir las probabilidades asociadas a la clase 1 (readmitido)
 
 umbral = 0.35  # Puedes ajustar este valor según tus necesidades
@@ -126,7 +133,7 @@ r_recall = metrics.recall_score(ytest,predicciones_con_umbral)
 print('recall score: %.2f' % r_recall)
 
 
-# Exportar modelo ganador #
+#10.Exportar modelo ganador 
 joblib.dump(mod_hiper, "salidas\\final.pkl") # Modelo ganador con afinamiento de hipermarametros 
 joblib.dump(list_label, "salidas\\list_label.pkl") 
 joblib.dump(list_dumies, "salidas\\list_dumies.pkl") 
@@ -134,7 +141,7 @@ joblib.dump(list_ordinal, "salidas\\list_ordinal.pkl")
 joblib.dump(scaler, "salidas\\scaler.pkl") ## para normalizar datos con MinMaxScaler
 
 
-######## RED NEURONAL ###################
+#11.Redes Neuronales
 
 #importar paquetes para redes neuronales
 

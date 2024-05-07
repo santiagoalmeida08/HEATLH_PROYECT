@@ -1,16 +1,27 @@
-#Paquetes requeridos  
+#En este apartado se realizara el analisis de los datos, determinando representaividad y composición
+#de las variables, asi como la relación entre las variables explicativas y la variable objetivo
+
+#1.Paquetes requeridos
+#2.Cargar base de datos
+#3.Resumen variables categoricas y numericas
+#4.Analisis de variables numericas
+#5.Analisis de variables categoricas
+#6.Guardar cambios en la  base de datos
+
+#1.Paquetes requeridos  
 import pandas as pd
 import sqlite3 as sql
 import funciones as fn 
 import matplotlib.pyplot as plt
 import seaborn as sns  
 from sklearn.preprocessing import OrdinalEncoder
-#visualización
+    #Visualización
 import plotly.express as px
-#Prueba chi-cuadrado
+    #Prueba chi-cuadrado
 from scipy.stats import chi2_contingency
 
-# conexión a la base de datos
+
+#Conexión a la base de datos
 
 r = pd.read_csv('data//hospital_readmissions.csv')
 r
@@ -24,14 +35,15 @@ r.to_sql('hr', conn, if_exists='replace', index=False)
 cur.execute('SELECT name FROM sqlite_master WHERE type="table"')
 cur.fetchall()
 
-# cargar base de datos 
+#2.Cargar base de datos 
 
 hr = pd.read_sql('SELECT * FROM hrmin', conn)
 
 hr.dtypes
 
+#3.Resumen variables categoricas y numericas
 
-#Resumen de variables categoricas 
+#3.1Resumen de variables categoricas 
 
 def cat_summary(dataframe, col_name, plot=False):
     print(pd.DataFrame({col_name: dataframe[col_name].value_counts(),
@@ -47,7 +59,7 @@ for col in cat_cols:
     cat_summary(hr, col, plot=False)
 
 
-#Resumen variables numericas
+#3.2Resumen variables numericas
 def num_summary(dataframe, numerical_col, plot=False):
     quantiles = [ 0.20, 0.50, 0.80, 0.959]
     print(dataframe[numerical_col].describe(quantiles).T)
@@ -66,7 +78,7 @@ for col in num_cols:
     num_summary(hr, col, plot=False)
 
 
-# Analisis Variables numericas 
+#4. Analisis Variables numericas 
 hr.columns
 hr_num = hr.iloc[:, 0:7] #seleccionamos variables numericas 
 
@@ -171,7 +183,7 @@ mientras mas tiempo esta un paciente en el hospital mayor es el numero de medica
 la correlación no supera un valor de 0,5 por lo cual ambas variables se seguiran teniendo en cuenta"""
 
 
-# Analisis de variables categoricas #
+#5.Analisis de variables categoricas 
 
 hr_cat = hr.iloc[:, 7:] #seleccionamos variables categoricas
 
@@ -227,4 +239,5 @@ fn.chi_square_test(hr_cat, 'readmitted')
 #Las variables referentes a als pruebas no representativas ; sin embargo es importante tener estos 
 #datos en cuenta al momento de proponer estrategias y concluir
 
+#6. Guardar cambios en la  base de datos
 hr_full.to_sql('hr_full', conn, if_exists='replace', index=False)

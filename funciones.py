@@ -1,25 +1,32 @@
+#En este script se encuentran las funciones que se utilizaran en los scripts de analisis exploratorio,
+#modelos y despliegue
+
+#1.Paquetes requeridos
+#2.Funcion lectura de datos preprocesamiento
+#3.Funcion prueba chi-cuadrado
+#4.Funcion para codificar variables
+#5.Funcion para medir el rendimiento de los modelos
+#6. Funcion optimización de red neuronal
+#7.Funcion de preparacion de datos
+
+#1.Paquetes requeridos
 import sqlite3 as sql
 import pandas as pd
 from scipy.stats import chi2_contingency
 from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
-from imblearn.over_sampling import RandomOverSampler
-from sklearn.model_selection import cross_val_score
-from sklearn.pipeline import make_pipeline
-import numpy as np
-from sklearn.feature_selection import SelectFromModel
 import joblib
 from tensorflow import keras  
 from sklearn import metrics  
 
 
-#Funcion lectura de datos preprocesamiento
+#2.Funcion lectura de datos preprocesamiento
 def ejecutar_sql (nombre_archivo, cur):
     sql_file=open(nombre_archivo)
     sql_as_string=sql_file.read()
     sql_file.close
     cur.executescript(sql_as_string)
 
-#Funcion prueba chi-cuadrado
+#3.Funcion prueba chi-cuadrado
 def chi_square_test(dataframe, target): 
     for col in dataframe.columns:
         print(col)
@@ -29,7 +36,7 @@ def chi_square_test(dataframe, target):
         print(f"Chi-Square Statistic: {stat}, p-value: {p}")
         print("===========")
         
-#Funcion para codificar variables
+#4.Funcion para codificar variables
 def encode_data(df, list_le, list_dd,list_oe): 
     df_encoded = df.copy()   
     "Recibe como parametros la base de datos y las listas de variables que se quieren codificar"
@@ -48,22 +55,7 @@ def encode_data(df, list_le, list_dd,list_oe):
     
     return df_encoded
 
-def sel_variables(modelo,X,y,threshold): 
-    """Recibe como parametros una lista de modelos, la base de datos escalada y codificada, treshold para seleccionar variables"""
-    var_names_ac=np.array([])
-    #for modelo in modelos:
-    modelo.fit(X,y)
-    sel = SelectFromModel(modelo, prefit=True,threshold=threshold)
-    var_names= modelo.feature_names_in_[sel.get_support()]
-    
-    var_names_ac=np.append(var_names_ac, var_names)
-    var_names_ac=np.unique(var_names_ac)
-        
-        
-    
-    return var_names_ac
-
-#Funcion para medir el rendimiento de los modelos
+#5.Funcion para medir el rendimiento de los modelos
 def modelos(list_mod, xtrain, ytrain, xtest, ytest):
     metrics_mod = pd.DataFrame()
     list_train = []
@@ -84,7 +76,7 @@ def modelos(list_mod, xtrain, ytrain, xtest, ytest):
         metrics_mod.columns = ['modelo','score_train','score_test']
     return metrics_mod
 
-# Funcion optimización de red neuronal
+#6. Funcion optimización de red neuronal
 def mejor_m(hp):
     opti = hp.Choice('OPTI', ['adam','rd2'])
     fa = hp.Choice('FA', ['relu','tanh','sigmoid'])
@@ -112,7 +104,7 @@ def mejor_m(hp):
     
     return ann2
 
-# Funcion de preparacion de datos
+#7.Funcion de preparacion de datos
 def preparar_datos (df):
     
     #Se realizan los cambios necesarios para que la base nueva tenga el mismo formato que la base con la que se entreno el modelo
